@@ -1,0 +1,5 @@
+!index.php
+!.htaccess
+*.hot
+build/
+storage/

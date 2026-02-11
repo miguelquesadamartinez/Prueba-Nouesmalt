@@ -1,0 +1,98 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: biblioteca_postgres
+    environment:
+      POSTGRES_DB: biblioteca
+      POSTGRES_USER: biblioteca_user
+      POSTGRES_PASSWORD: biblioteca_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - biblioteca_network
+
+  # pgAdmin - PostgreSQL Administration Tool
+  pgadmin:
+    image: dpage/pgadmin4:8.2
+    container_name: biblioteca_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@biblioteca.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_LISTEN_PORT: 80
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
+      PGADMIN_CONFIG_WTF_CSRF_ENABLED: "False"
+      PGADMIN_CONFIG_WTF_CSRF_CHECK_DEFAULT: "False"
+      PGADMIN_CONFIG_WTF_CSRF_TIME_LIMIT: "None"
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin-servers.json:/pgadmin4/servers.json
+      - ./pgadmin-pgpass:/tmp/pgpassfile
+    depends_on:
+      - postgres
+    networks:
+      - biblioteca_network
+    restart: unless-stopped
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: biblioteca_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: biblioteca
+      DB_USERNAME: biblioteca_user
+      DB_PASSWORD: biblioteca_pass
+      APP_ENV: local
+      APP_DEBUG: "true"
+    depends_on:
+      - postgres
+    networks:
+      - biblioteca_network
+    command: >
+      sh -c "composer install &&
+             php artisan key:generate --force &&
+             php artisan migrate --force &&
+             php artisan db:seed --force &&
+             php artisan serve --host=0.0.0.0 --port=8000"
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: biblioteca_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - biblioteca_network
+
+networks:
+  biblioteca_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
