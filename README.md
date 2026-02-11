@@ -133,68 +133,105 @@ backend/
 
 ### Requisitos Previos
 
-- Docker Desktop instalado
-- Git
+✅ **Docker Desktop** instalado y en ejecución  
+✅ **Git** instalado  
+✅ **Puertos disponibles**: 3000 (frontend), 5432 (PostgreSQL), 5050 (pgAdmin), 8000 (backend)
 
-### Pasos de Instalación
+### Instalación Rápida (⚡ 3 minutos)
 
-1. **Clonar el repositorio**
+#### 1️⃣ **Clonar y navegar al proyecto**
 
 ```bash
 git clone <repository-url>
-cd Prueba\ 001
+cd Prueba-Nouesmalt
 ```
 
-2. **Configurar variables de entorno**
+#### 2️⃣ **Configurar variables de entorno**
 
 ```bash
-# Backend
+# Backend - Copiar archivo de configuración
 cd backend
 cp .env.example .env
 cd ..
 ```
 
-3. **Levantar los contenedores**
+> 💡 **Nota**: El archivo `.env` ya contiene la configuración correcta para Docker.
+
+#### 3️⃣ **Levantar todo el sistema con Docker**
 
 ```bash
 docker-compose up -d
 ```
 
-4. **Instalar dependencias del backend**
+> ⏳ Espera 30-60 segundos mientras Docker:
+>
+> - Descarga las imágenes necesarias
+> - Instala dependencias automáticamente
+> - Configura Laravel (key:generate)
+> - Ejecuta migraciones y seeders
+> - Inicia todos los servicios
+
+#### 4️⃣ **Verificar que todo funciona**
 
 ```bash
-docker exec -it biblioteca_backend composer install
+# Comprobar que los contenedores están corriendo
+docker ps
+
+# Probar la API
+curl http://localhost:8000/api/users
 ```
 
-5. **Generar clave de aplicación**
+### 🎉 ¡Listo! Accede a tu aplicación
+
+| Servicio        | URL                       | Credenciales                                                           |
+| --------------- | ------------------------- | ---------------------------------------------------------------------- |
+| **Frontend**    | http://localhost:3000     | -                                                                      |
+| **Backend API** | http://localhost:8000/api | -                                                                      |
+| **pgAdmin**     | http://localhost:5050     | Email: `admin@biblioteca.com`<br>Password: `admin123`                  |
+| **PostgreSQL**  | localhost:5432            | DB: `biblioteca`<br>User: `biblioteca_user`<br>Pass: `biblioteca_pass` |
+
+### 🧪 Ejecutar Tests
 
 ```bash
-docker exec -it biblioteca_backend php artisan key:generate
-```
-
-6. **Ejecutar migraciones y seeders**
-
-```bash
-docker exec -it biblioteca_backend php artisan migrate --seed
-```
-
-7. **Acceder a la aplicación**
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- pgAdmin: http://localhost:5050 (admin@biblioteca.com / admin123)
-
-### Ejecutar Tests
-
-```bash
+# Ejecutar todos los tests (24 tests)
 docker exec -it biblioteca_backend php artisan test
+
+# Con cobertura detallada
+docker exec -it biblioteca_backend php artisan test --coverage
+
+# Ejecutar solo tests de un feature específico
+docker exec -it biblioteca_backend php artisan test --filter=LoanApiTest
 ```
 
-Con cobertura:
+### 🛠️ Comandos Útiles
 
 ```bash
-docker exec -it biblioteca_backend php artisan test --coverage
+# Ver logs en tiempo real
+docker-compose logs -f
+
+# Reiniciar servicios
+docker-compose restart
+
+# Detener todo
+docker-compose down
+
+# Detener y limpiar (⚠️ elimina datos)
+docker-compose down -v
+
+# Acceder al contenedor backend
+docker exec -it biblioteca_backend bash
+
+# Limpiar y recrear base de datos
+docker exec -it biblioteca_backend php artisan migrate:fresh --seed
 ```
+
+### 📖 Documentación Detallada
+
+Para guías más completas, consulta:
+
+- **[INSTALL.md](INSTALL.md)** - Instrucciones paso a paso con troubleshooting
+- **[QUICKSTART.md](QUICKSTART.md)** - Guía rápida de uso de la API
+- **[API.md](API.md)** - Documentación completa de endpoints
 
 ## 📚 API Endpoints
 
