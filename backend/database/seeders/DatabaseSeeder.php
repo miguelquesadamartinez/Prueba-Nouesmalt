@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create users
+        // Create users (idempotent - won't fail if already exists)
         $users = [
             ['nombre' => 'Juan', 'apellidos' => 'Pérez García', 'dni' => '12345678A'],
             ['nombre' => 'María', 'apellidos' => 'García López', 'dni' => '23456789B'],
@@ -21,10 +21,13 @@ class DatabaseSeeder extends Seeder
 
         $createdUsers = [];
         foreach ($users as $userData) {
-            $createdUsers[] = UserModel::create($userData);
+            $createdUsers[] = UserModel::updateOrCreate(
+                ['dni' => $userData['dni']], // Buscar por DNI
+                $userData // Datos a crear o actualizar
+            );
         }
 
-        // Create books
+        // Create books (idempotent - won't fail if already exists)
         $books = [
             ['titulo' => 'Clean Code', 'autor' => 'Robert C. Martin', 'isbn' => '9780132350884'],
             ['titulo' => 'Domain-Driven Design', 'autor' => 'Eric Evans', 'isbn' => '9780321125217'],
@@ -35,29 +38,38 @@ class DatabaseSeeder extends Seeder
 
         $createdBooks = [];
         foreach ($books as $bookData) {
-            $createdBooks[] = BookModel::create($bookData);
+            $createdBooks[] = BookModel::updateOrCreate(
+                ['isbn' => $bookData['isbn']], // Buscar por ISBN
+                $bookData // Datos a crear o actualizar
+            );
         }
 
-        // Create some loans
-        LoanModel::create([
-            'user_id' => $createdUsers[0]->id,
-            'book_id' => $createdBooks[0]->id,
-            'loan_date' => now()->subDays(10),
-            'return_date' => now()->subDays(5),
-        ]);
+        // Create some loans (only if users and books were created/found)
+        if (count($createdUsers) >= 2 && count($createdBooks) >= 3) {
+            // Solo crear préstamos si no existen ya (evitar duplicados)
+            LoanModel::firstOrCreate([
+                'user_id' => $createdUsers[0]->id,
+                'book_id' => $createdBooks[0]->id,
+            ], [
+                'loan_date' => now()->subDays(10),
+                'return_date' => now()->subDays(5),
+            ]);
 
-        LoanModel::create([
-            'user_id' => $createdUsers[0]->id,
-            'book_id' => $createdBooks[1]->id,
-            'loan_date' => now()->subDays(5),
-            'return_date' => null,
-        ]);
+            LoanModel::firstOrCreate([
+                'user_id' => $createdUsers[0]->id,
+                'book_id' => $createdBooks[1]->id,
+            ], [
+                'loan_date' => now()->subDays(5),
+                'return_date' => null,
+            ]);
 
-        LoanModel::create([
-            'user_id' => $createdUsers[1]->id,
-            'book_id' => $createdBooks[2]->id,
-            'loan_date' => now()->subDays(3),
-            'return_date' => null,
-        ]);
+            LoanModel::firstOrCreate([
+                'user_id' => $createdUsers[1]->id,
+                'book_id' => $createdBooks[2]->id,
+            ], [
+                'loan_date' => now()->subDays(3),
+                'return_date' => null,
+            ]);
+        }
     }
 }
