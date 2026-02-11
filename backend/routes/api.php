@@ -19,4 +19,4 @@ Route::get('/books/{id}', [BookController::class, 'show']);
 Route::get('/loans', [LoanController::class, 'index']);
 Route::post('/loans', [LoanController::class, 'store']);
 Route::post('/loans/{id}/return', [LoanController::class, 'returnBook']);
-Route::get('/loans/date-range', [LoanController::class, 'getLoansByDateRange']);
+Route::get('/loans/report', [LoanController::class, 'getLoansByDateRange']);
